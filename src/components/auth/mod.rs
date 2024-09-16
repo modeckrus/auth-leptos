@@ -50,8 +50,7 @@ impl Auth {
 
 #[cfg(not(feature = "ssr"))]
 fn initial_auth() -> AuthContext {
-    let (cookie, _) =
-        leptos_use::use_cookie::<String, leptos_use::utils::FromToStringCodec>("auth");
+    let (cookie, _) = leptos_use::use_cookie::<String, codee::string::FromToStringCodec>("auth");
     if let Some(token) = cookie.get_untracked() {
         return Some(token);
     }

@@ -1,22 +1,24 @@
 use cfg_if::cfg_if;
+use http::Uri;
 
 cfg_if! { if #[cfg(feature = "ssr")] {
+    use crate::components::app::App;
+    use axum::response::Response as AxumResponse;
     use axum::{
         body::Body,
         extract::State,
+        http::{Request, Response, StatusCode},
         response::IntoResponse,
-        http::{Request, Response, StatusCode, Uri},
     };
-    use axum::response::Response as AxumResponse;
-    use tower::ServiceExt;
-    use tower_http::services::ServeDir;
     use leptos::*;
-    use crate::components::app::App;
-    
+    use tower::util::ServiceExt;
+    use tower_http::services::ServeDir;
+
+
     pub async fn file_and_error_handler(uri: Uri, State(options): State<LeptosOptions>, req: Request<Body>) -> AxumResponse {
         let root = options.site_root.clone();
         let res = get_static_file(uri.clone(), &root).await.unwrap();
-    
+
         if res.status() == StatusCode::OK {
             res.into_response()
         } else {
@@ -24,7 +26,7 @@ cfg_if! { if #[cfg(feature = "ssr")] {
             handler(req).await.into_response()
         }
     }
-    
+
     async fn get_static_file(
         uri: Uri,
         root: &str,

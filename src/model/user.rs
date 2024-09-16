@@ -40,7 +40,7 @@ impl User {
             login.clone(),
             login,
             password,
-            "https://daisyui.com/images/stock/photo-1534528741775-53994a69daeb.jpg".to_string(),
+            None,
             now(),
             now(),
         )
@@ -52,7 +52,7 @@ impl User {
             "Admin".to_string(),
             "a@a.a".to_string(),
             "a".to_string(),
-            "https://daisyui.com/images/stock/photo-1534528741775-53994a69daeb.jpg".to_string(),
+            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_gaxAkYYDw8UfNleSC2Viswv3xSmOa4bIAQ&s".to_string(),
             now(),
             now(),
         )

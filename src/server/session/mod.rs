@@ -29,7 +29,7 @@ pub async fn session() -> crate::SR<Session> {
         Ok(Some(session)) => session,
         Ok(None) => {
             let (_, set_auth) =
-                leptos_use::use_cookie::<String, leptos_use::utils::FromToStringCodec>("auth");
+                leptos_use::use_cookie::<String, codee::string::FromToStringCodec>("auth");
             set_auth(None);
             Ctx::cx().auth.set(None);
             warn!("Invalid session redirecting to /auth");

@@ -61,7 +61,7 @@ pub fn MeBuilder(#[prop(optional, into)] f: UserFn) -> impl IntoView {
         Some(Ok(None)) => {
             use leptos_use::use_cookie;
             let (cookie, set_cookie) =
-                use_cookie::<String, leptos_use::utils::FromToStringCodec>("auth");
+                use_cookie::<String, codee::string::FromToStringCodec>("auth");
             set_cookie.set(None);
             view! { <leptos_router::Redirect path="/auth"></leptos_router::Redirect> }.into_view()
         }
