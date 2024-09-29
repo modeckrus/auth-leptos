@@ -67,7 +67,7 @@ impl SessionDB for SessionStoreSurreal {
             let sql = format!("SELECT * FROM {SESSIONDB} WHERE session_token = $session_token");
             let res: Option<SurrealSession> = c
                 .query(sql)
-                .bind(("session_token", token))
+                .bind(("session_token", token.to_string()))
                 .await
                 .map_err(|err| anyhow::anyhow!(err))?
                 .take(0)
@@ -84,7 +84,7 @@ impl SessionDB for SessionStoreSurreal {
         let surreal_session: SurrealSession = session.clone().into();
         let c = self.client.clone();
         async move {
-            let _: Vec<SurrealSession> = c.create(SESSIONDB).content(surreal_session).await?;
+            let _: Option<SurrealSession> = c.create(SESSIONDB).content(surreal_session).await?;
             Ok(session)
         }
     }

@@ -88,7 +88,7 @@ impl UserDB for UserStoreSurreal {
             let sql = format!("SELECT * FROM {} WHERE login = $login", USERDB);
             let res: Option<SurrealUser> = client
                 .query(&sql)
-                .bind(("login", login))
+                .bind(("login", login.to_string()))
                 .await
                 .map_err(|e| anyhow::anyhow!(e))?
                 .take(0)
@@ -104,15 +104,14 @@ impl UserDB for UserStoreSurreal {
         let client = self.client.clone();
         async move {
             let i: SurrealUser = user.into();
-            let created: Vec<SurrealUser> = client
+            let created: Option<SurrealUser> = client
                 .create(USERDB)
                 .content(i)
                 .await
                 .map_err(|e| anyhow::anyhow!(e))?;
-            if let Some(user) = created.into_iter().next() {
-                return Ok(user.into());
-            }
-            Err(anyhow::anyhow!("Failed to create user"))
+            Ok(created
+                .map(crate::model::user::User::from)
+                .ok_or(anyhow::anyhow!("failed to create user"))?)
         }
     }
 }

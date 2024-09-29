@@ -1,0 +1,14 @@
+[tasks.t]
+"command" = "npx tailwindcss -i ./input.css --config ./tailwind.config.js -o ./style/output.css"
+
+[tasks.tw]
+"command" = "npx tailwindcss -i ./input.css --config ./tailwind.config.js -o ./style/output.css --watch"
+
+[tasks.l]
+"command" = "cargo leptos build"
+
+[tasks.lw]
+"command" = "cargo leptos watch"
+
+[tasks.tlw]
+"dependencies" = ["t", "tw", "lw"]
