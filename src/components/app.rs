@@ -26,14 +26,6 @@ impl Ctx {
     }
 }
 
-fn dark_mode_class(is_dark: bool) -> String {
-    if is_dark {
-        "night".to_owned()
-    } else {
-        "light".to_owned()
-    }
-}
-
 #[component]
 pub fn App() -> impl IntoView {
     // Provides context that manages stylesheets, titles, meta tags, etc.
@@ -50,7 +42,7 @@ pub fn App() -> impl IntoView {
         // injects a stylesheet into the document <head>
         // id=leptos means cargo-leptos will hot-reload this stylesheet
         <Stylesheet id="leptos" href="/pkg/auth-leptos.css"/>
-
+        // <meta name="view-transition" content="same-origin" />
         // sets the document title
         <Title text="Welcome to Leptos"/>
 
@@ -64,10 +56,10 @@ pub fn App() -> impl IntoView {
         }>
             <main class="flex flex-col flex-1">
                 <Routes>
-                    <Route path="" view=HomePage ssr=SsrMode::OutOfOrder/>
-                    <Route path="auth" view=AuthorizePage/>
-                    <Route path="profile" view=ProfilePage/>
-                    <Route path="test" view=TestPage/>
+                    <Route ssr=SsrMode::OutOfOrder path="" view=HomePage/>
+                    <Route ssr=SsrMode::OutOfOrder path="auth" view=AuthorizePage/>
+                    <Route ssr=SsrMode::OutOfOrder path="profile" view=ProfilePage/>
+                    <Route ssr=SsrMode::OutOfOrder path="test" view=TestPage/>
                 </Routes>
             </main>
         </Router>

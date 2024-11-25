@@ -1,5 +1,4 @@
 pub mod session;
-pub mod surreal;
 pub mod user;
 use axum::body::Body as AxumBody;
 use axum::{

@@ -1,27 +1,22 @@
 #[cfg(test)]
 mod test;
-use std::future::Future;
+use std::{future::Future, result};
 
-use surrealdb::{engine::remote::ws::Client, sql::Thing, Surreal};
+use surrealsdk::*;
 
-use crate::server::surreal::{id_to_thing, thing_to_id, SESSIONDB, USERDB};
+use crate::server::user::surreal::UserId;
 
 use super::{SessionDB, Timestamp};
 #[derive(Debug, Clone)]
-pub struct SessionStoreSurreal {
-    pub client: Surreal<Client>,
-}
+pub struct SessionStoreSurreal {}
 
-impl SessionStoreSurreal {
-    pub fn new(client: Surreal<Client>) -> Self {
-        Self { client }
-    }
-}
+impl_id!(SessionId, "session");
+impl_table!(SurrealSession, "session");
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct SurrealSession {
-    pub id: Thing,
-    pub user_id: Thing,
+    pub id: SessionId,
+    pub user_id: UserId,
     pub session_token: String,
     pub last_used_at: Timestamp,
     pub expire_at: Timestamp,
@@ -32,8 +27,8 @@ pub struct SurrealSession {
 impl From<SurrealSession> for crate::model::session::Session {
     fn from(value: SurrealSession) -> Self {
         Self {
-            id: thing_to_id(&value.id),
-            user_id: thing_to_id(&value.user_id),
+            id: value.id.0,
+            user_id: value.user_id.0,
             session_token: value.session_token,
             last_used_at: value.last_used_at,
             expire_at: value.expire_at,
@@ -46,8 +41,8 @@ impl From<SurrealSession> for crate::model::session::Session {
 impl From<crate::model::session::Session> for SurrealSession {
     fn from(value: crate::model::session::Session) -> Self {
         Self {
-            id: id_to_thing(value.id, SESSIONDB),
-            user_id: id_to_thing(value.user_id, USERDB),
+            id: SessionId::new(value.id),
+            user_id: UserId::new(value.user_id),
             session_token: value.session_token,
             last_used_at: value.last_used_at,
             expire_at: value.expire_at,
@@ -62,17 +57,12 @@ impl SessionDB for SessionStoreSurreal {
         &self,
         token: &str,
     ) -> impl Send + Future<Output = crate::R<Option<crate::model::session::Session>>> {
-        let c = self.client.clone();
         async move {
-            let sql = format!("SELECT * FROM {SESSIONDB} WHERE session_token = $session_token");
-            let res: Option<SurrealSession> = c
-                .query(sql)
-                .bind(("session_token", token.to_string()))
-                .await
-                .map_err(|err| anyhow::anyhow!(err))?
-                .take(0)
-                .map_err(|err| anyhow::anyhow!(err))?;
-            Ok(res.map(Into::into))
+            let result: Option<SurrealSession> = o(select_all::<SurrealSession>()
+                .q("WHERE session_token = $session_token")
+                .bind("session_token", token))
+            .await?;
+            Ok(result.map(crate::model::session::Session::from))
         }
     }
 
@@ -82,9 +72,8 @@ impl SessionDB for SessionStoreSurreal {
     ) -> impl Send + Future<Output = crate::R<crate::model::session::Session>> {
         let session = crate::model::session::Session::from_user_id(user_id);
         let surreal_session: SurrealSession = session.clone().into();
-        let c = self.client.clone();
         async move {
-            let _: Option<SurrealSession> = c.create(SESSIONDB).content(surreal_session).await?;
+            let _: Option<SurrealSession> = o(create(surreal_session)).await?;
             Ok(session)
         }
     }

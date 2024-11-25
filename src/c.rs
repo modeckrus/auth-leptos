@@ -1,5 +1,3 @@
-
-
 pub type ID = String;
 
 pub type IDRef<'a> = &'a str;
@@ -10,11 +8,9 @@ pub fn now() -> Timestamp {
     chrono::Utc::now()
 }
 
-pub fn make_id() -> ID{
-    uuid::Uuid::new_v4().to_string()
+pub fn make_id() -> ID {
+    nanoid::nanoid!()
 }
-
-
 
 pub async fn sleep(duration: std::time::Duration) {
     #[cfg(feature = "ssr")]

@@ -23,12 +23,12 @@ async fn main() {
     let conf = get_configuration(None).await.unwrap();
     let leptos_options = conf.leptos_options;
     let addr = leptos_options.site_addr;
-    let client = surrealdb::Surreal::new::<surrealdb::engine::remote::ws::Ws>("localhost:8000")
+    surrealsdk::init();
+    surrealsdk::connect("ws://localhost:8000", "test", "test")
         .await
         .unwrap();
-    client.use_ns("test").use_db("test").await.unwrap();
-    let session_store = auth_leptos::server::session::SessionStore::new(client.clone());
-    let user_store = auth_leptos::server::user::UserStore::new(client.clone());
+    let session_store = auth_leptos::server::session::SessionStore {};
+    let user_store = auth_leptos::server::user::UserStore {};
     match user_store
         .create_user(auth_leptos::model::user::User::admin())
         .await

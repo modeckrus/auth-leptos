@@ -2,28 +2,21 @@
 mod test;
 use std::future::Future;
 
-use surrealdb::{engine::remote::ws::Client, sql::Thing, Surreal};
+use anyhow::Context;
+use surrealsdk::*;
 
-use crate::{
-    server::surreal::{id_to_thing, thing_to_id, USERDB},
-    R,
-};
+use crate::R;
 
 use super::{Timestamp, UserDB};
 #[derive(Debug, Clone)]
-pub struct UserStoreSurreal {
-    pub client: Surreal<Client>,
-}
+pub struct UserStoreSurreal {}
 
-impl UserStoreSurreal {
-    pub fn new(client: Surreal<Client>) -> Self {
-        Self { client }
-    }
-}
+impl_id!(UserId, "user");
+impl_table!(SurrealUser, "user");
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct SurrealUser {
-    pub id: Thing,
+    pub id: UserId,
     pub display_name: String,
     pub login: String,
     pub password: String,
@@ -35,7 +28,7 @@ pub struct SurrealUser {
 impl From<SurrealUser> for crate::model::user::User {
     fn from(value: SurrealUser) -> Self {
         Self {
-            id: thing_to_id(&value.id),
+            id: value.id.0,
             display_name: value.display_name,
             login: value.login,
             password: value.password,
@@ -49,7 +42,7 @@ impl From<SurrealUser> for crate::model::user::User {
 impl From<crate::model::user::User> for SurrealUser {
     fn from(value: crate::model::user::User) -> Self {
         Self {
-            id: id_to_thing(value.id, USERDB),
+            id: UserId::new(value.id),
             display_name: value.display_name,
             login: value.login,
             password: value.password,
@@ -65,17 +58,10 @@ impl UserDB for UserStoreSurreal {
         &self,
         id: super::IDRef,
     ) -> impl Future<Output = R<Option<crate::model::user::User>>> + Send {
-        let client = self.client.clone();
         async move {
-            let sql = format!("SELECT * FROM {} WHERE id = $id", USERDB);
-            let res: Option<SurrealUser> = client
-                .query(&sql)
-                .bind(("id", id_to_thing(id, USERDB)))
-                .await
-                .map_err(|e| anyhow::anyhow!(e))?
-                .take(0)
-                .map_err(|e| anyhow::anyhow!(e))?;
-            Ok(res.map(crate::model::user::User::from))
+            let uid = UserId::new(id);
+            let result: Option<SurrealUser> = o(uid.q()).await?;
+            Ok(result.map(crate::model::user::User::from))
         }
     }
 
@@ -83,17 +69,12 @@ impl UserDB for UserStoreSurreal {
         &self,
         login: &str,
     ) -> impl Future<Output = R<Option<crate::model::user::User>>> + Send {
-        let client = self.client.clone();
         async move {
-            let sql = format!("SELECT * FROM {} WHERE login = $login", USERDB);
-            let res: Option<SurrealUser> = client
-                .query(&sql)
-                .bind(("login", login.to_string()))
-                .await
-                .map_err(|e| anyhow::anyhow!(e))?
-                .take(0)
-                .map_err(|e| anyhow::anyhow!(e))?;
-            Ok(res.map(crate::model::user::User::from))
+            let result: Option<SurrealUser> = o(select_all::<SurrealUser>()
+                .q("WHERE login = $login")
+                .bind("login", login))
+            .await?;
+            Ok(result.map(crate::model::user::User::from))
         }
     }
 
@@ -101,17 +82,10 @@ impl UserDB for UserStoreSurreal {
         &self,
         user: crate::model::user::User,
     ) -> impl Future<Output = R<crate::model::user::User>> + Send {
-        let client = self.client.clone();
         async move {
             let i: SurrealUser = user.into();
-            let created: Option<SurrealUser> = client
-                .create(USERDB)
-                .content(i)
-                .await
-                .map_err(|e| anyhow::anyhow!(e))?;
-            Ok(created
-                .map(crate::model::user::User::from)
-                .ok_or(anyhow::anyhow!("failed to create user"))?)
+            let result: Option<SurrealUser> = o(create(i)).await?;
+            Ok(result.context("user not created")?.into())
         }
     }
 }

@@ -40,7 +40,7 @@ fn error_builder(err: impl Debug) -> View {
 pub fn MeBuilder(#[prop(optional, into)] f: UserFn) -> impl IntoView {
     let f = store_value(f);
     let user = create_resource(|| Ctx::cx().auth.get(), |_| async move { get_user().await });
-    let loading = || view! { <div>"Loading..."</div> }.into_view();
+    let loading = || view! {}.into_view();
 
     // Ctx::cx().auth.guard();
     let result = move || match user.get() {
@@ -67,7 +67,7 @@ pub fn MeBuilder(#[prop(optional, into)] f: UserFn) -> impl IntoView {
         }
         None => loading(),
     };
-    view! { <Suspense fallback=loading>{move || { result() }}</Suspense> }
+    view! { <Transition fallback=loading>{move || { result() }}</Transition> }
 }
 
 use crate::{MyError, SE};

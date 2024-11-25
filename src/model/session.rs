@@ -36,7 +36,7 @@ impl Session {
         Self::new(
             make_id(),
             user_id.into(),
-            uuid::Uuid::new_v4().to_string(),
+            make_id(),
             now(),
             now().add(std::time::Duration::from_secs(60 * 60 * 24 * 7)),
         )
