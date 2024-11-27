@@ -1,3 +1,5 @@
+pub mod surreal;
+pub mod credentials;
 pub mod session;
 pub mod user;
 use axum::body::Body as AxumBody;

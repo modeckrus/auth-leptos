@@ -122,17 +122,17 @@ pub async fn login(
     login: String,
     password: String,
 ) -> Result<Result<Session, LoginError>, ServerFnError<MyError>> {
-    let user = crate::server::user::user_by_login(&login)
+    let credentials = crate::server::credentials::credentials_by_login(&login)
         .await
         .map_err(|e| crate::MyError::from(e))?
         .ok_or(ServerFnError::WrappedServerError(MyError::from(
             anyhow::anyhow!("user not found"),
         )))?;
 
-    if user.password != password {
+    if credentials.password != password {
         return Ok(Err(LoginError::WrongCredentials));
     }
-    let session = crate::server::session::session_create_by_user_id(user.id)
+    let session = crate::server::session::session_create_by_user_id(credentials.uid)
         .await
         .map_err(|e| crate::MyError::from(e))?;
     crate::components::auth::save_auth_to_cookie(session.session_token.clone());

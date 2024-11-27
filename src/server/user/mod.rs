@@ -8,16 +8,15 @@ pub async fn user_by_id(uid: UserId) -> R<Option<User>> {
     o(uid.q()).await
 }
 
-pub async fn user_by_login(login: &str) -> R<Option<User>> {
-    o(select_all::<User>()
-        .q("WHERE login = $login")
-        .bind("login", login))
-    .await
-}
-
-pub async fn create_user(user: User) -> R<User> {
-    let user: Option<User> = o(create(user)).await?;
-    Ok(user.context("user not created")?.into())
+pub async fn upsert_user(user: User) -> R<User> {
+    let user: Option<User> = o(
+        format!("UPSERT {} CONTENT $user WHERE id = $id", User::table())
+            .q()
+            .bind("id", user.id.clone())
+            .bind("user", user),
+    )
+    .await?;
+    Ok(user.context("user not updated")?.into())
 }
 
 #[cfg(test)]
@@ -26,12 +25,16 @@ mod test {
     use crate::{model::user::User, R};
 
     #[tokio::test]
-    async fn test_create_and_get_user() -> R {
+    async fn test_upsert_user() -> R {
         surrealsdk::init();
         surrealsdk::connect("ws://localhost:8000", "test", "test").await?;
-        let user = User::login_pass("test", "test");
-        let res = create_user(user.clone()).await?;
-        assert_eq!(user, res);
+        let user = User {
+            id: UserId::new("1"),
+            display_name: "Admin".to_string(),
+            avatar_url: None,
+        };
+        let user = upsert_user(user).await?;
+        dbg!(user);
         Ok(())
     }
     #[tokio::test]

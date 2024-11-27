@@ -24,9 +24,12 @@ async fn main() {
     surrealsdk::connect("ws://localhost:8000", "test", "test")
         .await
         .unwrap();
-    match auth_leptos::server::user::create_user(auth_leptos::model::user::User::admin())
-        .await
-        .map_err(|e| anyhow::anyhow!("failed to create admin user: {}", e))
+    match auth_leptos::server::credentials::ensure_user_with_credentials(
+        auth_leptos::model::user::User::admin(),
+        auth_leptos::model::credential::Credentials::admin(),
+    )
+    .await
+    .map_err(|e| anyhow::anyhow!("failed to create admin user: {}", e))
     {
         Ok(admin) => log::info!("admin user created: {:?}", admin),
         Err(e) => log::error!("failed to create admin user: {}", e),

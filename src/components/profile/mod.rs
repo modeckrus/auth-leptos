@@ -18,9 +18,6 @@ pub fn ProfilePageContent(user: User) -> impl IntoView {
                 <img src=user.avatar_url class="max-w-sm rounded-lg shadow-2xl"/>
                 <div>
                     <h1 class="text-5xl font-bold">{user.display_name}</h1>
-                    <h2 class="text-3xl font-bold">{user.login}</h2>
-                    // print user created date
-                    <p class="py-6">{user.created_at.to_string()}</p>
                 </div>
             </div>
         </div>
