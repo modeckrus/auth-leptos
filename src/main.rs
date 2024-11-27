@@ -3,12 +3,11 @@
 async fn main() {
     use auth_leptos::components::app::*;
     use auth_leptos::fileserv::file_and_error_handler;
-    use auth_leptos::server::session::mock::SessionStoreMock;
-    use auth_leptos::server::session::SessionDB;
+
     use auth_leptos::server::user::UserDB;
     use auth_leptos::server::{leptos_routes_handler, server_fn_handler, AppState};
     use axum::routing::get;
-    use axum::{routing::post, Router};
+    use axum::Router;
     use leptos::*;
     use leptos_axum::{generate_route_list, LeptosRoutes};
     use tower_cookies::CookieManagerLayer;
@@ -39,8 +38,8 @@ async fn main() {
     }
 
     let app_db = auth_leptos::server::AppDb {
-        session_store: session_store,
-        user_store: user_store,
+        session_store,
+        user_store,
     };
     let app_state = AppState::new(leptos_options, app_db);
     let routes = generate_route_list(App);
