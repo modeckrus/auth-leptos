@@ -3,8 +3,6 @@
 async fn main() {
     use auth_leptos::components::app::*;
     use auth_leptos::fileserv::file_and_error_handler;
-
-    use auth_leptos::server::user::UserDB;
     use auth_leptos::server::{leptos_routes_handler, server_fn_handler, AppState};
     use axum::routing::get;
     use axum::Router;
@@ -26,10 +24,7 @@ async fn main() {
     surrealsdk::connect("ws://localhost:8000", "test", "test")
         .await
         .unwrap();
-    let session_store = auth_leptos::server::session::SessionStore {};
-    let user_store = auth_leptos::server::user::UserStore {};
-    match user_store
-        .create_user(auth_leptos::model::user::User::admin())
+    match auth_leptos::server::user::create_user(auth_leptos::model::user::User::admin())
         .await
         .map_err(|e| anyhow::anyhow!("failed to create admin user: {}", e))
     {
@@ -37,10 +32,7 @@ async fn main() {
         Err(e) => log::error!("failed to create admin user: {}", e),
     }
 
-    let app_db = auth_leptos::server::AppDb {
-        session_store,
-        user_store,
-    };
+    let app_db = auth_leptos::server::AppDb {};
     let app_state = AppState::new(leptos_options, app_db);
     let routes = generate_route_list(App);
 

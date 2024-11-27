@@ -73,13 +73,10 @@ pub fn MeBuilder(#[prop(optional, into)] f: UserFn) -> impl IntoView {
 use crate::{MyError, SE};
 #[server(GetUser, "/api")]
 pub async fn get_user() -> Result<Option<User>, ServerFnError<MyError>> {
-    use crate::server::user::UserDB;
-    use crate::server::user_store;
     let Ok(session) = crate::server::session::session().await else {
         return Ok(None);
     };
-    let users = user_store();
-    let Ok(Some(user)) = users.by_id(&session.user_id).await else {
+    let Ok(Some(user)) = crate::server::user::user_by_id(session.user_id).await else {
         return Ok(None);
     };
     Ok(Some(user))

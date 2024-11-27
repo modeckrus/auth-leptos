@@ -265,6 +265,7 @@ dependencies = [
  "leptos_router",
  "log",
  "nanoid",
+ "query",
  "rand",
  "serde",
  "simple_logger",

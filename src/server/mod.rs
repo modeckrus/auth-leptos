@@ -2,18 +2,14 @@ pub mod session;
 pub mod user;
 use axum::body::Body as AxumBody;
 use axum::{
-    extract::{Path, RawQuery, State},
+    extract::{Path, State},
     response::{IntoResponse, Response},
 };
-use http::{HeaderMap, Request};
-use leptos::{provide_context, use_context, view, LeptosOptions};
+use http::Request;
+use leptos::{provide_context, view, LeptosOptions};
 use tower_cookies::Cookies;
 
 use crate::components::app::App;
-use crate::model::session::Session;
-
-use self::session::{SessionDB, SessionStore};
-use self::user::UserStore;
 
 #[derive(Debug, Clone, axum::extract::FromRef)]
 pub struct AppState {
@@ -28,10 +24,7 @@ impl AppState {
 }
 
 #[derive(Debug, Clone, axum::extract::FromRef)]
-pub struct AppDb {
-    pub session_store: SessionStore,
-    pub user_store: UserStore,
-}
+pub struct AppDb {}
 
 pub async fn server_fn_handler(
     State(app_state): State<AppState>,
@@ -65,12 +58,4 @@ pub async fn leptos_routes_handler(
         move || view! { <App/> },
     );
     handler(req).await.into_response()
-}
-
-pub fn session_store() -> SessionStore {
-    use_context::<AppDb>().unwrap().session_store
-}
-
-pub fn user_store() -> UserStore {
-    use_context::<AppDb>().unwrap().user_store
 }

@@ -1,7 +1,7 @@
 use leptos::{IntoView, RwSignal, SignalUpdate};
 use std::sync::Arc;
 
-use leptos::logging::*;
+// use leptos::logging::*;
 use leptos::*;
 
 #[component]

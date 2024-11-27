@@ -1,21 +1,21 @@
-pub mod mock;
-mod surreal;
-use std::future::Future;
-use std::sync::Arc;
-
-use leptos::{logging::warn, ServerFnError, SignalGetUntracked};
-use tokio::sync::RwLock;
-
-use super::session_store;
-use crate::{c::*, MyError, R};
+use crate::model::user::UserId;
 use crate::{components::app::Ctx, model::session::Session};
+use crate::{MyError, R};
+use anyhow::Context;
+use leptos::{logging::warn, ServerFnError, SignalGetUntracked};
+use surrealsdk::*;
 
-pub trait SessionDB {
-    fn by_token(&self, token: &str) -> impl Send + Future<Output = R<Option<Session>>>;
-    fn create_by_user_id(&self, user_id: IDRef) -> impl Send + Future<Output = R<Session>>;
+pub async fn session_by_token(token: &str) -> R<Option<Session>> {
+    o(select_all::<Session>()
+        .q("WHERE session_token = $session_token")
+        .bind("session_token", token))
+    .await
 }
 
-pub type SessionStore = surreal::SessionStoreSurreal;
+pub async fn session_create_by_user_id(user_id: UserId) -> R<Session> {
+    let s = o::<Session>(create(Session::from_user_id(user_id))).await?;
+    Ok(s.context("session not created")?)
+}
 
 pub async fn session() -> crate::SR<Session> {
     let token = Ctx::cx()
@@ -24,8 +24,7 @@ pub async fn session() -> crate::SR<Session> {
         .ok_or::<ServerFnError<MyError>>(
             crate::MyError::from(anyhow::anyhow!("Session not found")).into(),
         )?;
-    let sessions = session_store();
-    let session = match sessions.by_token(&token).await {
+    let session = match session_by_token(&token).await {
         Ok(Some(session)) => session,
         Ok(None) => {
             let (_, set_auth) =
@@ -41,4 +40,34 @@ pub async fn session() -> crate::SR<Session> {
     };
 
     Ok(session)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::R;
+
+    #[tokio::test]
+    async fn test_create_and_get_session() -> R {
+        surrealsdk::init();
+        surrealsdk::connect("ws://localhost:8000", "test", "test").await?;
+        let session = session_create_by_user_id(UserId::new("1")).await?;
+        let result_session = session_by_token(&session.session_token)
+            .await?
+            .ok_or(anyhow::anyhow!("No session"))?;
+        assert_eq!(session, result_session);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_session_by_token() -> R {
+        surrealsdk::init();
+        surrealsdk::connect("ws://localhost:8000", "test", "test").await?;
+        let result_session = session_by_token("x7vrGse6wsSUVy0IczMwk")
+            .await?
+            .ok_or(anyhow::anyhow!("No session"))?;
+        println!("{:?}", result_session);
+        // assert_eq!(session, result_session);
+        Ok(())
+    }
 }

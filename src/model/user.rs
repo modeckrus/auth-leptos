@@ -1,8 +1,10 @@
+use query::{impl_id, impl_table};
+
 use crate::c::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
 pub struct User {
-    pub id: ID,
+    pub id: UserId,
     pub display_name: String,
     pub login: String,
     pub password: String,
@@ -11,9 +13,11 @@ pub struct User {
     pub updated_at: Timestamp,
 }
 
+impl_id!(UserId, "user");
+impl_table!(User, "user");
 impl User {
     pub fn new(
-        id: impl Into<ID>,
+        id: impl Into<UserId>,
         display_name: impl Into<String>,
         login: impl Into<String>,
         password: impl Into<String>,
@@ -36,7 +40,7 @@ impl User {
         let login = login.into();
         let password = password.into();
         Self::new(
-            make_id(),
+            UserId::none(),
             login.clone(),
             login,
             password,
@@ -48,7 +52,7 @@ impl User {
 
     pub fn admin() -> Self {
         Self::new(
-            "1".to_string(),
+            UserId::new("1"),
             "Admin".to_string(),
             "a@a.a".to_string(),
             "a".to_string(),

@@ -53,6 +53,7 @@ rand = "0.8.5"
 anyhow = "1"
 codee = "0.2"
 surrealsdk = { path = "../surrealsdk/surrealsdk", optional = true }
+query = { path = "../surrealsdk/query" }
 nanoid = "*"
 
 [features]

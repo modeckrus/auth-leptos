@@ -1,22 +1,28 @@
 use std::ops::Add;
 
+use query::{impl_id, impl_table};
+
 use crate::c::*;
+
+use super::user::UserId;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Session {
-    pub id: ID,
-    pub user_id: ID,
+    pub id: SessionId,
+    pub user_id: UserId,
     pub session_token: String,
     pub last_used_at: Timestamp,
     pub expire_at: Timestamp,
     pub created_at: Timestamp,
     pub updated_at: Timestamp,
 }
+impl_id!(SessionId, "session");
+impl_table!(Session, "session");
 
 impl Session {
     pub fn new(
-        id: impl Into<ID>,
-        user_id: impl Into<ID>,
+        id: impl Into<SessionId>,
+        user_id: impl Into<UserId>,
         token: impl Into<String>,
         last_used_at: Timestamp,
         expire_at: Timestamp,
@@ -32,11 +38,11 @@ impl Session {
         }
     }
 
-    pub fn from_user_id(user_id: impl Into<ID>) -> Self {
+    pub fn from_user_id(user_id: impl Into<UserId>) -> Self {
         Self::new(
-            make_id(),
+            SessionId::none(),
             user_id.into(),
-            make_id(),
+            nanoid::nanoid!(),
             now(),
             now().add(std::time::Duration::from_secs(60 * 60 * 24 * 7)),
         )
